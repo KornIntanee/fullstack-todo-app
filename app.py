@@ -23,12 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
-    instance_dir = Path(app.instance_path)
-    instance_dir.mkdir(parents=True, exist_ok=True)
 
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY", "dev-only-change-me"),
-        DATABASE=os.environ.get("DATABASE_PATH", str(instance_dir / "todo.db")),
+        DATABASE=os.environ.get("DATABASE_PATH", "/tmp/todo.db"),
     )
 
     if test_config:
@@ -59,7 +57,8 @@ def create_app(test_config=None):
     app.teardown_appcontext(close_db)
 
     with app.app_context():
-        init_db()
+        if not Path(app.config["DATABASE"]).exists():
+            init_db()
 
     def login_required(view):
         @wraps(view)
